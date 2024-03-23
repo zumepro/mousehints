@@ -278,6 +278,11 @@ fn run(x: &X) {
         if key == 21 { move_cursor_and_click(x, 4, -1, -1, false); }
 
         if key >= 38 && key <= 46 {
+            if shift {
+                move_cursor_edge_and_click(x, &area, key - 38, -1, false);
+                continue
+            }
+
             let i = key - 38;
 
             history.push(area.clone());
@@ -292,7 +297,6 @@ fn main() {
     /*
      * TODO LIST
      *
-     * - just move the cursor without clicking
      * - some sort of config file for custom bindings
      * - test what happens with multiple screens
      */
