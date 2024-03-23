@@ -153,9 +153,9 @@ fn get_key_press(x: &X) -> Option<(u32, u32)> {
     }
 }
 
-fn move_cursor_and_close(x: X, button: u32, ox: i32, oy: i32) {
+fn move_cursor_and_click(x: &X, button: u32, ox: i32, oy: i32) {
     unsafe {
-        xlib::XUnmapWindow(x.dpy, x.window);
+        xlib::XLowerWindow(x.dpy, x.window);
 
         if ox >= 0 && oy >= 0 {
             xlib::XWarpPointer(x.dpy, 0, x.rootwin, 0, 0, 0, 0, ox, oy);
@@ -165,7 +165,15 @@ fn move_cursor_and_close(x: X, button: u32, ox: i32, oy: i32) {
         xlib::XSync(x.dpy, 0);
         xtest::XTestFakeButtonEvent(x.dpy, button, 0, 0);
         xlib::XSync(x.dpy, 0);
-        
+
+        xlib::XRaiseWindow(x.dpy, x.window);
+    }
+}
+
+fn close_x(x: X) {
+    unsafe {
+        xlib::XUnmapWindow(x.dpy, x.window);
+        xlib::XDestroyWindow(x.dpy, x.window);
         xlib::XFreeGC(x.dpy, x.gc);
         xlib::XFreeColormap(x.dpy, x.colormap);
         xlib::XCloseDisplay(x.dpy);
@@ -201,12 +209,7 @@ fn edges(area: &Area, segment: u32, button: u32) -> (i32, i32, u32) {
     (x, y, button)
 }
 
-fn run() -> bool {
-    let x = match start_x() {
-        Some(x) => x,
-        None => return false
-    };
-
+fn run(x: &X) -> bool {
     let mut area = Area {
         x: 0,
         y: 0,
@@ -234,8 +237,6 @@ fn run() -> bool {
         if key == 21 { break (-1, -1, 5); }
 
         if key >= 38 && key <= 46 {
-            // TODO - use some sort of stack for undo
-
             let i = key - 38;
 
             (area.x, area.w) = third(area.x, area.w, i % 3);
@@ -247,17 +248,32 @@ fn run() -> bool {
         return false;
     }
 
-    // TODO - do not actually restart everything (maybe just hide the window?)
-    move_cursor_and_close(x, button, ox, oy);
+    move_cursor_and_click(&x, button, ox, oy);
 
     true
 }
 
 fn main() {
-    // TODO - a config file
+    /*
+     * TODO LIST
+     *
+     * - undo stack
+     * - double click (possibly Shift+X?)
+     * - scrolling
+     * - holding without releasing (for drag 'n' drop)
+     * - some sort of config file for custom bindings
+     * - test what happens with multiple screens
+     */
+
+    let x = match start_x() {
+        Some(x) => x,
+        None => return
+    };
 
     loop {
-        if !run() { break; }
+        if !run(&x) { break; }
     }
+
+    close_x(x);
 }
 
