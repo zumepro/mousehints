@@ -6,6 +6,7 @@ struct X {
     dpy: *mut xlib::Display,
     rootwin: xlib::Window,
     window: xlib::Window,
+    colormap: xlib::Colormap,
     gc: xlib::GC,
     w: i32,
     h: i32
@@ -71,6 +72,7 @@ fn start_x() -> Option<X> {
             dpy,
             rootwin,
             window: overlay,
+            colormap: attrs.colormap,
             gc,
             w,
             h
@@ -145,6 +147,8 @@ fn get_key_press(x: &X) -> Option<(u32, u32)> {
             if xlib::XNextEvent(x.dpy, &mut ev) != 0 { return None; }
 
             if ev.type_ == xlib::KeyPress { return Some((ev.key.keycode, ev.key.state)); }
+
+            xlib::XRaiseWindow(x.dpy, x.window);
         }
     }
 }
@@ -153,12 +157,17 @@ fn move_cursor_and_close(x: X, button: u32, ox: i32, oy: i32) {
     unsafe {
         xlib::XUnmapWindow(x.dpy, x.window);
 
-        xlib::XWarpPointer(x.dpy, 0, x.rootwin, 0, 0, 0, 0, ox, oy);
+        if ox >= 0 && oy >= 0 {
+            xlib::XWarpPointer(x.dpy, 0, x.rootwin, 0, 0, 0, 0, ox, oy);
+        }
+
         xtest::XTestFakeButtonEvent(x.dpy, button, 1, 0);
         xlib::XSync(x.dpy, 0);
         xtest::XTestFakeButtonEvent(x.dpy, button, 0, 0);
         xlib::XSync(x.dpy, 0);
         
+        xlib::XFreeGC(x.dpy, x.gc);
+        xlib::XFreeColormap(x.dpy, x.colormap);
         xlib::XCloseDisplay(x.dpy);
     }
     
@@ -220,6 +229,9 @@ fn run() -> bool {
         if key >= 24 && key <= 32 { break edges(&area, key - 24, 1); }
         if key >= 10 && key <= 18 { break edges(&area, key - 10, 2); }
         if key >= 52 && key <= 60 { break edges(&area, key - 52, 3); }
+
+        if key == 20 { break (-1, -1, 4); }
+        if key == 21 { break (-1, -1, 5); }
 
         if key >= 38 && key <= 46 {
             // TODO - use some sort of stack for undo
