@@ -80,6 +80,7 @@ fn start_x() -> Option<X> {
     }
 }
 
+#[derive(Clone)]
 struct Area {
     x: i32,
     y: i32,
@@ -236,6 +237,8 @@ fn run(x: &X) -> bool {
         h: x.h
     };
 
+    let mut history: Vec<Area> = Vec::new();
+
     let (ox, oy, button): (i32, i32, u32) = loop {
         draw(&x, &area);
 
@@ -246,7 +249,14 @@ fn run(x: &X) -> bool {
 
         println!("key: {} {}", key, state);
 
-        if key == 66 { break (0, 0, 0); }
+        if key == 66 {
+            if state != 0 { break(0, 0, 0) }
+
+            area = match history.pop() {
+                Some(val) => val,
+                None => break (0, 0, 0)
+            };
+        }
 
         if key >= 24 && key <= 32 { break edges(&area, key - 24, 1); }
         if key >= 10 && key <= 18 { break edges(&area, key - 10, 2); }
@@ -257,6 +267,8 @@ fn run(x: &X) -> bool {
 
         if key >= 38 && key <= 46 {
             let i = key - 38;
+
+            history.push(area.clone());
 
             (area.x, area.w) = third(area.x, area.w, i % 3);
             (area.y, area.h) = third(area.y, area.h, i / 3);
@@ -276,7 +288,6 @@ fn main() {
     /*
      * TODO LIST
      *
-     * - undo stack
      * - just move the cursor without clicking
      * - double click - do not reset after pressing
      * - holding without releasing (for drag 'n' drop)
