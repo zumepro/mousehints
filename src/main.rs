@@ -190,6 +190,24 @@ fn move_cursor_and_click(x: &X, button: u32, ox: i32, oy: i32) {
     }
 }
 
+fn move_cursor_edge_and_click(x: &X, area: &Area, segment: u32, button: u32) {
+    let ox = match segment % 3 {
+        0 => area.x,
+        1 => area.x + area.w / 2,
+        2 => area.x + area.w - 1,
+        _ => return
+    };
+    
+    let oy = match segment / 3 {
+        0 => area.y,
+        1 => area.y + area.h / 2,
+        2 => area.y + area.h - 1,
+        _ => return
+    };
+
+    move_cursor_and_click(x, button, ox, oy)
+}
+
 fn close_x(x: X) {
     unsafe {
         xlib::XUnmapWindow(x.dpy, x.window);
@@ -211,25 +229,7 @@ fn third(pos: i32, size: i32, segment: u32) -> (i32, i32) {
     }
 }
 
-fn edges(area: &Area, segment: u32, button: u32) -> (i32, i32, u32) {
-    let x = match segment % 3 {
-        0 => area.x,
-        1 => area.x + area.w / 2,
-        2 => area.x + area.w - 1,
-        _ => 0  
-    };
-    
-    let y = match segment / 3 {
-        0 => area.y,
-        1 => area.y + area.h / 2,
-        2 => area.y + area.h - 1,
-        _ => 0  
-    };
-
-    (x, y, button)
-}
-
-fn run(x: &X) -> bool {
+fn run(x: &X) {
     let mut area = Area {
         x: 0,
         y: 0,
@@ -239,31 +239,31 @@ fn run(x: &X) -> bool {
 
     let mut history: Vec<Area> = Vec::new();
 
-    let (ox, oy, button): (i32, i32, u32) = loop {
+    loop {
         draw(&x, &area);
 
         let (key, state) = match get_key_press(&x) {
             Some(val) => val,
-            None => break (0, 0, 0)
+            None => break
         };
 
         println!("key: {} {}", key, state);
 
         if key == 66 {
-            if state != 0 { break(0, 0, 0) }
+            if state != 0 { break }
 
             area = match history.pop() {
                 Some(val) => val,
-                None => break (0, 0, 0)
+                None => break 
             };
         }
 
-        if key >= 24 && key <= 32 { break edges(&area, key - 24, 1); }
-        if key >= 10 && key <= 18 { break edges(&area, key - 10, 2); }
-        if key >= 52 && key <= 60 { break edges(&area, key - 52, 3); }
+        if key >= 24 && key <= 32 { move_cursor_edge_and_click(x, &area, key - 24, 1); }
+        if key >= 10 && key <= 18 { move_cursor_edge_and_click(x, &area, key - 10, 2); }
+        if key >= 52 && key <= 60 { move_cursor_edge_and_click(x, &area, key - 52, 3); }
 
-        if key == 20 { break (-1, -1, 5); }
-        if key == 21 { break (-1, -1, 4); }
+        if key == 20 { move_cursor_and_click(x, 5, -1, -1); }
+        if key == 21 { move_cursor_and_click(x, 4, -1, -1); }
 
         if key >= 38 && key <= 46 {
             let i = key - 38;
@@ -273,15 +273,7 @@ fn run(x: &X) -> bool {
             (area.x, area.w) = third(area.x, area.w, i % 3);
             (area.y, area.h) = third(area.y, area.h, i / 3);
         }
-    };
-
-    if button == 0 {
-        return false;
     }
-
-    move_cursor_and_click(&x, button, ox, oy);
-
-    true
 }
 
 fn main() {
@@ -300,9 +292,7 @@ fn main() {
         None => return
     };
 
-    loop {
-        if !run(&x) { break; }
-    }
+    run(&x);
 
     close_x(x);
 }
