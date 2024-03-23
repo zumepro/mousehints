@@ -11,7 +11,7 @@ struct X {
     h: i32
 }
 
-fn start_x() -> X {
+fn start_x() -> Option<X> {
     unsafe {
         // thx https://stackoverflow.com/questions/21780789/x11-draw-on-overlay-window
 
@@ -26,6 +26,7 @@ fn start_x() -> X {
 
         if xlib::XMatchVisualInfo(dpy, screen, 32, xlib::TrueColor, &mut vinfo) == 0 {
             println!("No visual found supporting 32 bit color");
+            return None;
         }
 
         attrs.colormap = xlib::XCreateColormap(dpy, rootwin, vinfo.visual, xlib::AllocNone);
@@ -34,8 +35,6 @@ fn start_x() -> X {
 
         let w = xlib::XDisplayWidth(dpy, screen);
         let h = xlib::XDisplayHeight(dpy, screen);
-
-        println!("{}x{}", w, h);
 
         let overlay: xlib::Window = xlib::XCreateWindow(
             dpy, rootwin,
@@ -56,14 +55,14 @@ fn start_x() -> X {
 
         let gc = xlib::XCreateGC(dpy, overlay, 0, std::ptr::null_mut());
 
-        X {
+        Some(X {
             dpy,
             rootwin,
             window: overlay,
             gc,
             w,
             h
-        }
+        })
     }
 }
 
@@ -150,7 +149,7 @@ fn move_cursor_and_close(x: X, button: u32, ox: i32, oy: i32) {
         
         xlib::XCloseDisplay(x.dpy);
     }
-
+    
     drop(x);
 }
 
@@ -181,8 +180,11 @@ fn edges(area: &Area, segment: u32, button: u32) -> (i32, i32, u32) {
     (x, y, button)
 }
 
-fn main() {
-    let x = start_x();
+fn run() -> bool {
+    let x = match start_x() {
+        Some(x) => x,
+        None => return false
+    };
 
     let mut area = Area {
         x: 0,
@@ -199,7 +201,7 @@ fn main() {
             None => break (0, 0, 0)
         };
 
-        println!("{} {}", key, state);
+        println!("key: {} {}", key, state);
 
         if key == 66 { break (0, 0, 0); }
 
@@ -218,11 +220,19 @@ fn main() {
     };
 
     if button == 0 {
-        return;
+        return false;
     }
 
     move_cursor_and_close(x, button, ox, oy);
 
-    println!("Hello, world!");
+    true
+}
+
+fn main() {
+    // TODO - a config file
+
+    loop {
+        if !run() { break; }
+    }
 }
 
