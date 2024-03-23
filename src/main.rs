@@ -173,7 +173,7 @@ fn get_key_press(x: &X) -> Option<(u32, u32)> {
     }
 }
 
-fn move_cursor_and_click(x: &X, button: u32, ox: i32, oy: i32) {
+fn move_cursor_and_click(x: &X, button: i32, ox: i32, oy: i32, no_release: bool) {
     unsafe {
         xlib::XLowerWindow(x.dpy, x.window);
 
@@ -181,16 +181,26 @@ fn move_cursor_and_click(x: &X, button: u32, ox: i32, oy: i32) {
             xlib::XWarpPointer(x.dpy, 0, x.rootwin, 0, 0, 0, 0, ox, oy);
         }
 
-        xtest::XTestFakeButtonEvent(x.dpy, button, 1, 0);
-        xlib::XSync(x.dpy, 0);
-        xtest::XTestFakeButtonEvent(x.dpy, button, 0, 0);
-        xlib::XSync(x.dpy, 0);
+        let b: Result<u32, _> = button.try_into();
+
+        match b {
+            Ok(val) => {
+                xtest::XTestFakeButtonEvent(x.dpy, val, 1, 0);
+                xlib::XSync(x.dpy, 0);
+
+                if !no_release {
+                    xtest::XTestFakeButtonEvent(x.dpy, val, 0, 0);
+                    xlib::XSync(x.dpy, 0);
+                }
+            },
+            _ => {}
+        }
 
         xlib::XRaiseWindow(x.dpy, x.window);
     }
 }
 
-fn move_cursor_edge_and_click(x: &X, area: &Area, segment: u32, button: u32) {
+fn move_cursor_edge_and_click(x: &X, area: &Area, segment: u32, button: i32, no_release: bool) {
     let ox = match segment % 3 {
         0 => area.x,
         1 => area.x + area.w / 2,
@@ -205,7 +215,7 @@ fn move_cursor_edge_and_click(x: &X, area: &Area, segment: u32, button: u32) {
         _ => return
     };
 
-    move_cursor_and_click(x, button, ox, oy)
+    move_cursor_and_click(x, button, ox, oy, no_release);
 }
 
 fn close_x(x: X) {
@@ -258,12 +268,14 @@ fn run(x: &X) {
             };
         }
 
-        if key >= 24 && key <= 32 { move_cursor_edge_and_click(x, &area, key - 24, 1); }
-        if key >= 10 && key <= 18 { move_cursor_edge_and_click(x, &area, key - 10, 2); }
-        if key >= 52 && key <= 60 { move_cursor_edge_and_click(x, &area, key - 52, 3); }
+        let shift: bool = state & 1 == 1;
 
-        if key == 20 { move_cursor_and_click(x, 5, -1, -1); }
-        if key == 21 { move_cursor_and_click(x, 4, -1, -1); }
+        if key >= 24 && key <= 32 { move_cursor_edge_and_click(x, &area, key - 24, 1, shift); }
+        if key >= 10 && key <= 18 { move_cursor_edge_and_click(x, &area, key - 10, 2, shift); }
+        if key >= 52 && key <= 60 { move_cursor_edge_and_click(x, &area, key - 52, 3, shift); }
+
+        if key == 20 { move_cursor_and_click(x, 5, -1, -1, false); }
+        if key == 21 { move_cursor_and_click(x, 4, -1, -1, false); }
 
         if key >= 38 && key <= 46 {
             let i = key - 38;
@@ -281,7 +293,6 @@ fn main() {
      * TODO LIST
      *
      * - just move the cursor without clicking
-     * - holding without releasing (for drag 'n' drop)
      * - some sort of config file for custom bindings
      * - test what happens with multiple screens
      */
