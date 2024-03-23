@@ -47,11 +47,23 @@ fn start_x() -> Option<X> {
 
         // the following was lifted from suckless' slock
 
-        xlib::XGrabKeyboard(dpy, rootwin, 1, xlib::GrabModeAsync, xlib::GrabModeAsync, xlib::CurrentTime); // TODO - error checking
-        
-        xlib::XMapRaised(dpy, overlay);
+        let mut grab = xlib::GrabFrozen;
 
-        xlib::XSelectInput(dpy, rootwin, xlib::KeyPressMask);
+        for _i in 0..10 {
+            grab = xlib::XGrabKeyboard(dpy, rootwin, 1, xlib::GrabModeAsync, xlib::GrabModeAsync, xlib::CurrentTime);
+
+            if grab == xlib::GrabSuccess {
+                xlib::XMapRaised(dpy, overlay);
+                xlib::XSelectInput(dpy, rootwin, xlib::KeyPressMask);
+                break;
+            }
+
+            std::thread::sleep(std::time::Duration::from_millis(100));
+        }
+
+        if grab != xlib::GrabSuccess {
+            return None;
+        }
 
         let gc = xlib::XCreateGC(dpy, overlay, 0, std::ptr::null_mut());
 
