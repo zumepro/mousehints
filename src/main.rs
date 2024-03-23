@@ -233,8 +233,8 @@ fn run(x: &X) -> bool {
         if key >= 10 && key <= 18 { break edges(&area, key - 10, 2); }
         if key >= 52 && key <= 60 { break edges(&area, key - 52, 3); }
 
-        if key == 20 { break (-1, -1, 4); }
-        if key == 21 { break (-1, -1, 5); }
+        if key == 20 { break (-1, -1, 5); }
+        if key == 21 { break (-1, -1, 4); }
 
         if key >= 38 && key <= 46 {
             let i = key - 38;
@@ -259,7 +259,6 @@ fn main() {
      *
      * - undo stack
      * - double click (possibly Shift+X?)
-     * - scrolling
      * - holding without releasing (for drag 'n' drop)
      * - some sort of config file for custom bindings
      * - test what happens with multiple screens
