@@ -277,6 +277,15 @@ fn run(x: &X) {
         if key == 20 { move_cursor_and_click(x, 5, -1, -1, false); }
         if key == 21 { move_cursor_and_click(x, 4, -1, -1, false); }
 
+        if key == 65 {
+            loop {
+                area = match history.pop() {
+                    Some(val) => val,
+                    None => break
+                }
+            }
+        }
+
         if key >= 38 && key <= 46 {
             if shift {
                 move_cursor_edge_and_click(x, &area, key - 38, -1, false);
