@@ -247,6 +247,7 @@ fn run() -> bool {
         return false;
     }
 
+    // TODO - do not actually restart everything (maybe just hide the window?)
     move_cursor_and_close(x, button, ox, oy);
 
     true
