@@ -31,7 +31,7 @@ Cutting-edge features include:
 
 All jokes aside, this tool might actually be a useful tool for some folks, especially for those who suffer from [carpal tunnel syndrome](https://en.wikipedia.org/wiki/Carpal_tunnel_syndrome) or perhaps some disability which inhibits longer-distance hand movement in some way. With mousehints, those individuals would not have to move their hands as much, possibly reducing the pain associated with normally using the mouse.
 
-Please note, however, that **mousekeys has not (yet) been clinically tested**.
+Please note, however, that **mousehints has not (yet) been clinically tested**.
 
 <hr>
 
