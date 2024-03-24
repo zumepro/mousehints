@@ -259,16 +259,16 @@ fn run(x: &X) {
 
         println!("key: {} {}", key, state);
 
+        let shift: bool = state & 1 == 1;
+
         if key == 66 {
-            if state != 0 { break }
+            if shift { break }
 
             area = match history.pop() {
                 Some(val) => val,
                 None => break 
             };
         }
-
-        let shift: bool = state & 1 == 1;
 
         if key >= 24 && key <= 32 { move_cursor_edge_and_click(x, &area, key - 24, 1, shift); }
         if key >= 10 && key <= 18 { move_cursor_edge_and_click(x, &area, key - 10, 2, shift); }
