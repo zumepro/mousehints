@@ -17,7 +17,7 @@ If you are that type of computer user, fear no more! We bring you the finest sol
 **mousehints** allows you to move the mouse cursor around the screen and make interactions with it **only using your keyboard**.
 
 Cutting-edge features include:
-- efficient design with more than 40 hotkeys
+- efficient design with more than 70 hotkeys
 - being able to reach virtually any pixel on a Full HD screen with at most 6 keypresses
 - scroll wheel simulation
 - clicking (or holding) one or more mouse buttons (left, right, middle)
